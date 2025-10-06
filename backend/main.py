@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import datasets, analyze, external
+from app.routers import datasets, analyze, external, neural_networks  # Temporalmente comentado para debugging
 
 app = FastAPI(title="Data Analytics Integrator", version="0.1.0")
 
@@ -22,5 +22,6 @@ def root():
 app.include_router(datasets.router)
 app.include_router(analyze.router)
 app.include_router(external.router)
+app.include_router(neural_networks.router, prefix="/neural-networks", tags=["neural-networks"])
 
 # Punto de entrada uvicorn (ej: uvicorn backend.main:app --reload)

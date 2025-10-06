@@ -3,6 +3,7 @@ import UploadArea from './components/UploadArea';
 import KaggleImport from './components/KaggleImport';
 import DatasetCard from './components/DatasetCard';
 import AnalysisPanel from './components/AnalysisPanel';
+import NeuralNetworks from './components/NeuralNetworks';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
@@ -11,6 +12,7 @@ export default function App() {
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [analysisData, setAnalysisData] = useState({});
   const [activeTab, setActiveTab] = useState('upload');
+  const [mainView, setMainView] = useState('analysis'); // 'analysis' or 'neural-networks'
 
   const fetchDatasets = async () => {
     try {
@@ -34,8 +36,42 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'system-ui', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       <header style={{ backgroundColor: '#2c3e50', color: 'white', padding: '1rem 2rem' }}>
-        <h1 style={{ margin: 0 }}>🔬 Data Analytics Integrator</h1>
-        <p style={{ margin: '0.5rem 0 0 0', opacity: 0.8 }}>Análisis inteligente de datasets</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ margin: 0 }}>🔬 Data Analytics Integrator</h1>
+            <p style={{ margin: '0.5rem 0 0 0', opacity: 0.8 }}>Análisis inteligente de datasets</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              onClick={() => setMainView('analysis')}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                backgroundColor: mainView === 'analysis' ? '#3498db' : 'transparent',
+                color: 'white',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                border: '1px solid rgba(255,255,255,0.3)'
+              }}
+            >
+              📊 Análisis
+            </button>
+            <button
+              onClick={() => setMainView('neural-networks')}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                backgroundColor: mainView === 'neural-networks' ? '#3498db' : 'transparent',
+                color: 'white',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                border: '1px solid rgba(255,255,255,0.3)'
+              }}
+            >
+              🧠 Redes Neuronales
+            </button>
+          </div>
+        </div>
       </header>
 
       <div style={{ display: 'flex', gap: '1rem', padding: '1rem' }}>
@@ -94,17 +130,21 @@ export default function App() {
 
         {/* Main Content */}
         <div style={{ flex: 1, backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          {selectedDataset ? (
-            <AnalysisPanel 
-              dataset={selectedDataset} 
-              analysisData={analysisData}
-              setAnalysisData={setAnalysisData}
-            />
+          {mainView === 'analysis' ? (
+            selectedDataset ? (
+              <AnalysisPanel 
+                dataset={selectedDataset} 
+                analysisData={analysisData}
+                setAnalysisData={setAnalysisData}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', color: '#7f8c8d', marginTop: '4rem' }}>
+                <h2>👈 Selecciona un dataset para análisis</h2>
+                <p>Una vez seleccionado, podrás ver estadísticas, correlaciones y datos faltantes.</p>
+              </div>
+            )
           ) : (
-            <div style={{ textAlign: 'center', color: '#7f8c8d', marginTop: '4rem' }}>
-              <h2>👈 Selecciona un dataset para análisis</h2>
-              <p>Una vez seleccionado, podrás ver estadísticas, correlaciones y datos faltantes.</p>
-            </div>
+            <NeuralNetworks datasets={datasets} />
           )}
         </div>
       </div>

@@ -1,6 +1,39 @@
-React + Vite
+# Frontend Dependencies for Data Analytics Platform
+# Framework: React + Vite
+
+## Core Framework
+- React ^18.2.0
+- Vite ^5.0.0 (Build tool & dev server)
+
+## UI & Styling
+- CSS Modules (built-in Vite support)
+- Vanilla CSS with modern features
+
+## HTTP Client
+- Fetch API (native browser support)
+
+## Data Visualization (Future)
+- Chart.js or D3.js (to be added when needed)
+- Plotly.js (for interactive charts)
+
+## Development Tools
+- ESLint (code linting)
+- Prettier (code formatting)
+- Vite Hot Module Replacement (HMR)
+
+## Installation Commands:
+```bash
 cd frontend
-npm create vite@latest
-# ➜ Nombre: frontend
-# ➜ Framework: React
-# ➜ Variant: JavaScript
+npm install
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run preview    # Preview production build
+```
+
+## Current Features:
+- ✅ Dataset management interface
+- ✅ Data analysis dashboard  
+- ✅ External data import (Kaggle)
+- ✅ Neural Networks training interface
+- ✅ Model management & predictions
+- ✅ Responsive design
