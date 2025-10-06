@@ -1,0 +1,18 @@
+fastapi
+uvicorn
+pandas
+python-multipart
+sqlalchemy
+psycopg2-binary
+alembic
+pydantic
+pydantic-settings
+kaggle  # para importar datasets externos (opcional)
+openpyxl  # para archivos Excel .xlsx
+xlrd  # para archivos Excel .xls (legacy)
+
+# Development/Testing
+pytest
+pytest-asyncio
+httpx
+ruff

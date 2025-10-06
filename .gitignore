@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+*.sqlite3
+*.db
+.DS_Store
+
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+
+# Jupyter/Notebook
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# Node/Vite/React
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Archivos de datos
+backend/data/uploads/
+backend/data/*.db
+
+# Configuración local/env
+.env
+.env.*
+
+# Otros
+*.orig
+*.rej
+*.coverage
+coverage/
+
+# Mac/Linux
+*.DS_Store
+*.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/

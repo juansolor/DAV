@@ -1,0 +1,6 @@
+React + Vite
+cd frontend
+npm create vite@latest
+# ➜ Nombre: frontend
+# ➜ Framework: React
+# ➜ Variant: JavaScript
