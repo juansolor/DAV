@@ -22,6 +22,6 @@ def root():
 app.include_router(datasets.router)
 app.include_router(analyze.router)
 app.include_router(external.router)
-app.include_router(neural_networks.router, prefix="/neural-networks", tags=["neural-networks"])
+app.include_router(neural_networks.router)
 
 # Punto de entrada uvicorn (ej: uvicorn backend.main:app --reload)

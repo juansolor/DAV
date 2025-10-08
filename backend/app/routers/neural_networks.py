@@ -30,6 +30,11 @@ router = APIRouter(
 
 nn_service = NeuralNetworkService()
 
+@router.get("/test")
+async def test_endpoint():
+    """Endpoint de prueba para verificar que el router funciona"""
+    return {"message": "Neural Networks router funcionando correctamente", "status": "ok"}
+
 @router.post("/classification/train", response_model=TrainingResponse)
 async def train_classification_model(
     request: ClassificationRequest,
@@ -255,3 +260,242 @@ async def get_model_plot(model_id: str, plot_type: str):
         return plot_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando gráfico: {str(e)}")
+
+# Nuevos endpoints para análisis visual
+
+from ..schemas.neural_networks import (
+    DataAnalysisRequest,
+    DataAnalysisResponse,
+    DatasetSummaryResponse,
+    ColumnInfoResponse,
+    QuickPlotRequest,
+    QuickPlotResponse
+)
+
+@router.post("/analysis/plots", response_model=DataAnalysisResponse)
+async def generate_analysis_plots(
+    request: DataAnalysisRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Genera múltiples gráficos de análisis de datos según configuraciones especificadas
+    """
+    try:
+        # Verificar que el dataset existe
+        dataset = db.query(Dataset).filter(Dataset.id == request.dataset_id).first()
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset no encontrado")
+        
+        # Generar gráficos
+        result = await nn_service.generate_data_analysis_plots(
+            request.dataset_id, 
+            [config.model_dump() for config in request.plot_configs]
+        )
+        
+        return DataAnalysisResponse(**result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generando gráficos: {str(e)}")
+
+@router.get("/analysis/dataset/{dataset_id}/summary", response_model=DatasetSummaryResponse)
+async def get_dataset_summary(
+    dataset_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene resumen estadístico completo del dataset
+    """
+    try:
+        # Verificar que el dataset existe
+        dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset no encontrado")
+        
+        summary = await nn_service.get_dataset_summary(dataset_id)
+        return DatasetSummaryResponse(**summary)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo resumen: {str(e)}")
+
+@router.get("/analysis/dataset/{dataset_id}/columns", response_model=ColumnInfoResponse)
+async def get_column_info(
+    dataset_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene información detallada de las columnas del dataset
+    """
+    try:
+        # Verificar que el dataset existe
+        dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset no encontrado")
+        
+        column_info = await nn_service.get_column_info(dataset_id)
+        return ColumnInfoResponse(**column_info)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo información de columnas: {str(e)}")
+
+@router.post("/analysis/quick-plot", response_model=QuickPlotResponse)
+async def generate_quick_plot(
+    request: QuickPlotRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Genera un gráfico rápido con configuración simplificada
+    """
+    try:
+        # Verificar que el dataset existe
+        dataset = db.query(Dataset).filter(Dataset.id == request.dataset_id).first()
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset no encontrado")
+        
+        # Crear configuración de gráfico
+        plot_config = {
+            'type': request.plot_type,
+            'title': request.title,
+            'x_axis': request.x_column,
+            'y_axis': request.y_column,
+            'color_by': request.color_column
+        }
+        
+        # Generar gráfico
+        result = await nn_service.generate_data_analysis_plots(
+            request.dataset_id, 
+            [plot_config]
+        )
+        
+        if not result['plots']:
+            raise HTTPException(status_code=400, detail="No se pudo generar el gráfico")
+        
+        plot_data = result['plots'][0]
+        
+        # Obtener información básica del dataset
+        dataset_info = await nn_service.get_column_info(request.dataset_id)
+        
+        return QuickPlotResponse(
+            plot_data=plot_data['plot_data'],
+            plot_config=plot_data['plot_config'],
+            dataset_info={
+                'total_columns': len(dataset_info['columns']),
+                'numeric_columns': len(dataset_info['numeric_columns']),
+                'categorical_columns': len(dataset_info['categorical_columns'])
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generando gráfico rápido: {str(e)}")
+
+@router.get("/analysis/dataset/{dataset_id}/correlations")
+async def get_correlations(
+    dataset_id: int,
+    method: str = "pearson",
+    columns: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene matriz de correlaciones del dataset
+    """
+    try:
+        # Verificar que el dataset existe
+        dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset no encontrado")
+        
+        # Versión simplificada para debugging
+        dataset_info = await nn_service.get_column_info(dataset_id)
+        numeric_columns = dataset_info['numeric_columns']
+        
+        if len(numeric_columns) < 2:
+            raise HTTPException(status_code=400, detail="Se necesitan al menos 2 columnas numéricas para correlaciones")
+        
+        return {
+            'message': f'Dataset {dataset_id} tiene {len(numeric_columns)} columnas numéricas',
+            'numeric_columns': numeric_columns,
+            'method': method,
+            'dataset_id': dataset_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculando correlaciones: {str(e)}")
+
+@router.get("/analysis/plot-types")
+async def get_available_plot_types():
+    """
+    Obtiene los tipos de gráficos disponibles con sus descripciones
+    """
+    return {
+        'plot_types': [
+            {
+                'type': 'scatter',
+                'name': 'Scatter Plot',
+                'description': 'Gráfico de dispersión para mostrar relación entre dos variables numéricas',
+                'required_params': ['x_axis', 'y_axis'],
+                'optional_params': ['color_by', 'size_by', 'hover_data']
+            },
+            {
+                'type': 'histogram',
+                'name': 'Histogram',
+                'description': 'Histograma para mostrar distribución de una variable',
+                'required_params': ['column'],
+                'optional_params': ['bins', 'color']
+            },
+            {
+                'type': 'box',
+                'name': 'Box Plot',
+                'description': 'Diagrama de caja para mostrar distribución y outliers',
+                'required_params': ['y_axis'],
+                'optional_params': ['x_axis']
+            },
+            {
+                'type': 'correlation',
+                'name': 'Correlation Matrix',
+                'description': 'Matriz de correlación entre variables numéricas',
+                'required_params': [],
+                'optional_params': ['columns', 'method']
+            },
+            {
+                'type': 'line',
+                'name': 'Line Plot',
+                'description': 'Gráfico de líneas para series temporales o tendencias',
+                'required_params': ['x_axis', 'y_axis'],
+                'optional_params': ['group_by']
+            },
+            {
+                'type': 'bar',
+                'name': 'Bar Plot',
+                'description': 'Gráfico de barras para variables categóricas',
+                'required_params': ['x_axis'],
+                'optional_params': ['y_axis']
+            },
+            {
+                'type': 'heatmap',
+                'name': 'Heatmap',
+                'description': 'Mapa de calor para visualizar patrones en datos',
+                'required_params': [],
+                'optional_params': ['columns']
+            },
+            {
+                'type': 'violin',
+                'name': 'Violin Plot',
+                'description': 'Gráfico de violín que combina box plot y densidad',
+                'required_params': ['y_axis'],
+                'optional_params': ['x_axis']
+            },
+            {
+                'type': 'distribution',
+                'name': 'Distribution Analysis',
+                'description': 'Análisis completo de distribución con estadísticas',
+                'required_params': ['column'],
+                'optional_params': []
+            },
+            {
+                'type': 'pair',
+                'name': 'Pair Plot',
+                'description': 'Matriz de gráficos de pares entre variables',
+                'required_params': [],
+                'optional_params': ['columns']
+            }
+        ]
+    }

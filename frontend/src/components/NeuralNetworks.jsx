@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DataAnalysis from './DataAnalysis';
 
 const NeuralNetworks = ({ datasets = [] }) => {
   const [models, setModels] = useState([]);
@@ -151,7 +152,7 @@ const NeuralNetworks = ({ datasets = [] }) => {
         marginBottom: '2rem',
         borderBottom: '2px solid #e2e8f0'
       }}>
-        {['train', 'models', 'predict'].map((tab) => (
+        {['train', 'models', 'predict', 'analysis'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -169,6 +170,7 @@ const NeuralNetworks = ({ datasets = [] }) => {
             {tab === 'train' && '🏋️ Entrenar Modelo'}
             {tab === 'models' && '📊 Modelos Entrenados'}
             {tab === 'predict' && '🎯 Predicciones'}
+            {tab === 'analysis' && '📈 Análisis Visual'}
           </button>
         ))}
       </div>
@@ -585,6 +587,11 @@ const NeuralNetworks = ({ datasets = [] }) => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Analysis Tab */}
+      {activeTab === 'analysis' && (
+        <DataAnalysis datasets={datasets} />
       )}
     </div>
   );

@@ -231,3 +231,107 @@ class ModelExportResponse(BaseModel):
     export_format: str
     model_id: str
     exported_at: datetime
+
+# Nuevos esquemas para análisis visual
+
+class PlotType(str, Enum):
+    """Tipos de gráficos disponibles"""
+    SCATTER = "scatter"
+    HISTOGRAM = "histogram"
+    BOX = "box"
+    CORRELATION = "correlation"
+    LINE = "line"
+    BAR = "bar"
+    HEATMAP = "heatmap"
+    VIOLIN = "violin"
+    DISTRIBUTION = "distribution"
+    PAIR = "pair"
+
+class PlotConfig(BaseModel):
+    """Configuración para un gráfico"""
+    type: PlotType
+    title: Optional[str] = None
+    x_axis: Optional[str] = None
+    y_axis: Optional[str] = None
+    color_by: Optional[str] = None
+    size_by: Optional[str] = None
+    group_by: Optional[str] = None
+    column: Optional[str] = None  # Para histogramas y distribuciones
+    columns: Optional[List[str]] = None  # Para correlaciones, heatmaps, etc.
+    bins: Optional[int] = Field(default=30, ge=5, le=100)  # Para histogramas
+    method: Optional[str] = Field(default="pearson")  # Para correlaciones
+    color: Optional[List[str]] = None  # Colores personalizados
+    hover_data: Optional[List[str]] = None  # Datos adicionales en hover
+
+    @field_validator('method')
+    @classmethod
+    def validate_correlation_method(cls, v):
+        if v not in ["pearson", "spearman", "kendall"]:
+            raise ValueError('method must be one of: pearson, spearman, kendall')
+        return v
+
+class DataAnalysisRequest(BaseModel):
+    """Request para análisis de datos con múltiples gráficos"""
+    dataset_id: int
+    plot_configs: List[PlotConfig] = Field(min_length=1, max_length=10)
+
+class PlotData(BaseModel):
+    """Datos de un gráfico generado"""
+    plot_type: str
+    plot_data: Dict[str, Any]  # Datos del gráfico en formato Plotly
+    config: Dict[str, Any]  # Configuración usada
+    plot_config: Dict[str, Any]  # Configuración de Plotly
+    correlation_data: Optional[Dict[str, Any]] = None  # Datos de correlación si aplica
+    statistics: Optional[Dict[str, Any]] = None  # Estadísticas si aplica
+
+class DataAnalysisResponse(BaseModel):
+    """Response de análisis de datos"""
+    dataset_id: int
+    plots: List[PlotData]
+    generated_at: str
+
+class DatasetSummaryResponse(BaseModel):
+    """Response con resumen estadístico del dataset"""
+    basic_info: Dict[str, Any]
+    numeric_summary: Dict[str, Any]
+    categorical_summary: Dict[str, Any]
+    correlations: Dict[str, Any]
+
+class ColumnInfo(BaseModel):
+    """Información de una columna"""
+    name: str
+    dtype: str
+    null_count: int
+    null_percentage: float
+    unique_count: int
+    is_numeric: bool
+    is_categorical: bool
+    min: Optional[float] = None
+    max: Optional[float] = None
+    mean: Optional[float] = None
+    median: Optional[float] = None
+    std: Optional[float] = None
+    top_values: Optional[Dict[str, int]] = None
+    sample_values: Optional[List[Any]] = None
+
+class ColumnInfoResponse(BaseModel):
+    """Response con información de columnas"""
+    dataset_id: int
+    columns: Dict[str, ColumnInfo]
+    numeric_columns: List[str]
+    categorical_columns: List[str]
+
+class QuickPlotRequest(BaseModel):
+    """Request para gráfico rápido"""
+    dataset_id: int
+    plot_type: PlotType
+    x_column: Optional[str] = None
+    y_column: Optional[str] = None
+    color_column: Optional[str] = None
+    title: Optional[str] = None
+
+class QuickPlotResponse(BaseModel):
+    """Response de gráfico rápido"""
+    plot_data: Dict[str, Any]
+    plot_config: Dict[str, Any]
+    dataset_info: Dict[str, Any]
